@@ -5,63 +5,55 @@ namespace view;
 require_once("model/StickGameObserver.php");
 
 class GameView implements \model\StickGameObserver {
-	const StartingNumberOfSticks = 22;
 
-	/** 
-	* @var integer
-	*/
 	private $numberOfSticksAIDrewLastTime = 0;
-
-	/** 
-	* @var boolean
-	*/
 	private $playerWon = false;
+	private $aiMessage = '';
 
 	public function playerWins() {
 		$this->playerWon = true;
 	}
+
 	public function playerLoose() {
 		$this->playerWon = false;
 	}
 
+	public function addAiMessage($aiMessage) {
+		$this->aiMessage = $aiMessage;
+	}
+
+	private function getAiMessage() : string {
+		return '<p>' . $this->aiMessage . '</p>';
+	}
+
 	/**
 	 * Sets the number of sticks the AI player did
-	 * @param  modelStickSelection $sticks 
 	 */
 	public function aiRemoved(\model\StickSelection $sticks) {
 		$this->numberOfSticksAIDrewLastTime = $sticks->getAmount();
 	}
 
-	/**
-	 * @param modelLastStickGame $game 
-	 */
 	public function __construct(\model\LastStickGame $game) {
 		$this->game = $game;
 	}
 
-	
-
-	/** 
-	* @return String HTML
-	*/
-	public function show($message) {
+	public function show($message) : string {
 		if ($this->game->isGameOver()) {
 
 			return 	$message .
+					$this->getAiMessage() .
 					$this->showSticks() . 
 					$this->showWinner() . 
 					$this->startOver();
 		} else {
 			return 	$message .
+					$this->getAiMessage() .
 					$this->showSticks() . 
 					$this->showSelection();
 		}
 	}
 
-	/** 
-	* @return String HTML
-	*/
-	private function showSticks() {
+	private function showSticks() : string {
 		$numSticks = $this->game->getNumberOfSticks();
 		$aiDrew = $this->numberOfSticksAIDrewLastTime;
 
@@ -77,7 +69,7 @@ class GameView implements \model\StickGameObserver {
 		for (; $i < $aiDrew + $numSticks; $i++) {
 			$sticks .= "."; //Sticks taken by opponent
 		}
-		for (; $i < self::StartingNumberOfSticks; $i++) {
+		for (; $i < \model\LastStickGame::StartingNumberOfSticks; $i++) {
 			$sticks .= "_"; //old sticks
 		}
 		return "<p>There is $numSticks stick" . ($numSticks > 1 ? "s" : "") ." left</p>
@@ -85,10 +77,7 @@ class GameView implements \model\StickGameObserver {
 				<p>$opponentsMove</p>";
 	}
 
-	/** 
-	* @return String HTML
-	*/
-	private function showSelection() {
+	private function showSelection() : string {
 		
 		$numSticks = $this->game->getNumberOfSticks();
 
@@ -104,10 +93,7 @@ class GameView implements \model\StickGameObserver {
 		return $ret;
 	}
 
-	/** 
-	* @return String HTML
-	*/
-	private function showWinner() {
+	private function showWinner() : string {
 		if ($this->playerWon) {
 			return "<h2>Congratulations</h2>
 					<p>You force the opponent to draw the last stick!</p>";
@@ -117,12 +103,26 @@ class GameView implements \model\StickGameObserver {
 		}
 	}
 
-	/** 
-	* @return String HTML
-	*/
-	private function startOver() {
+	private function startOver() : string {
 
 		return "<a href='?startOver'>Start new game</a>";
 		
+	}
+
+	public function playerSelectSticks() : bool {
+		return isset($_GET["draw"]);
+	}
+
+	public function playerStartsOver() : bool {
+		return isset($_GET["startOver"]);
+	}
+
+	public function getNumberOfSticks() : \model\StickSelection {
+		switch ($_GET["draw"]) {
+			case 1 : return \model\StickSelection::One(); break;
+			case 2 : return \model\StickSelection::Two(); break;
+			case 3 : return \model\StickSelection::Three(); break;
+		}
+		throw new \Exception("<h1>Unauthorized input</h1>");
 	}
 }

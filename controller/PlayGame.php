@@ -5,8 +5,8 @@ namespace controller;
 require_once("model/LastStickGame.php");
 require_once("view/GameView.php");
 
-class PlayGame {
-
+class PlayGame
+{
 	/**
 	 * @var \model\LastStickGame
 	 */
@@ -17,21 +17,16 @@ class PlayGame {
 	 */
 	private $view;
 
-	/**
-	 * @var string
-	 */
 	private $message = "";
 
-
-	public function __construct() {
+	public function __construct()
+	{
 		$this->game = new \model\LastStickGame();
 		$this->view = new \view\GameView($this->game);
 	}
 
-	/**
-	* @return String HTML
-	*/
-	public function runGame() {
+	public function runGame() : string
+	{
 		//Handle input
 		if ($this->game->isGameOver()) {
 			$this->doGameOver();
@@ -46,46 +41,24 @@ class PlayGame {
 	/**
 	* Called when game is still running
 	*/
-	private function playGame() {
-		if ($this->playerSelectSticks()) {
+	private function playGame()
+	{
+		if ($this->view->playerSelectSticks()) {
 			try {
-				$sticksDrawnByPlayer = $this->getNumberOfSticks();
-				$this->game->playerSelectsSticks($sticksDrawnByPlayer, $this->view);
+				$sticksDrawnByPlayer = $this->view->getNumberOfSticks();
+				$this->game->playerSelectsSticks($sticksDrawnByPlayer);
 			} catch(\Exception $e) {
-				$this->message = "<h1>Unauthorized input</h1>";
+				$this->message = $e->getMessage();
 			}
+
+			$this->game->playerWinsOrAITurn($this->view);
 		}
 	}
 
-	private function doGameOver() {
-		if ($this->playerStartsOver()) {
+	private function doGameOver()
+	{
+		if ($this->view->playerStartsOver()) {
 			$this->game->newGame();
 		}		
-	}
-
-	/** 
-	* @return boolean
-	*/
-	private function playerSelectSticks() {
-		return isset($_GET["draw"]);
-	}
-
-	/** 
-	* @return boolean
-	*/
-	private function playerStartsOver() {
-		return isset($_GET["startOver"]);
-	}
-
-	/** 
-	* @return \model\StickSelection
-	*/
-	private function getNumberOfSticks() {
-		switch ($_GET["draw"]) {
-			case 1 : return \model\StickSelection::One(); break;
-			case 2 : return \model\StickSelection::Two(); break;
-			case 3 : return \model\StickSelection::Three(); break;
-		}
-		throw new \Exception("Invalid input");
 	}
 }
